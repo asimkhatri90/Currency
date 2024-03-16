@@ -83,7 +83,7 @@ class CurrencyViewModel @Inject constructor(
 
     fun changeSelectedCurrency(newCurrency: Currency) {
         _selectedCurrency.value = newCurrency
-        _refresh.value = _refresh.value + 1
+        _refresh.value += 1
     }
 
     fun changeAmount(amount: String) {
@@ -92,13 +92,13 @@ class CurrencyViewModel @Inject constructor(
         else
             this._amount.value = "1.0"
 
-        _refresh.value = _refresh.value + 1
+        _refresh.value += 1
     }
 
     suspend fun refreshCurrencyList() {
         viewModelScope.launch {
             repository.getLatestCurrencyList()
-            _refresh.value = _refresh.value + 1
+            _refresh.value += 1
         }
     }
 }

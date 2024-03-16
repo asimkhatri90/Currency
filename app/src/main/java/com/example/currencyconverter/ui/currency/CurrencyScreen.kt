@@ -100,7 +100,7 @@ fun CurrencyDropDown(
     currencyList: List<Currency>, selectedCurrency: Currency, onCurrencySelected: (Currency) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedCurrency by remember { mutableStateOf(selectedCurrency) }
+    var selCurrency by remember { mutableStateOf(selectedCurrency) }
     Box(
         modifier = Modifier.wrapContentSize(Alignment.TopStart)
     ) {
@@ -128,7 +128,7 @@ fun CurrencyDropDown(
         ) {
             currencyList.forEachIndexed { index, s ->
                 DropdownMenuItem(onClick = {
-                    selectedCurrency = s
+                    selCurrency = s
                     expanded = false
                     onCurrencySelected(s)
                 }) {
