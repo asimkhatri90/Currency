@@ -28,13 +28,11 @@ object RepositoryModule {
     fun provideCurrencyConverterRepository(
         currencyRemoteDataSource: CurrencyApi,
         currencyLocalDataSource: CurrencyDao,
-        currencyConverter: CurrencyConverter,
         dispatcher: CoroutineDispatcher
     ): CurrencyRepository {
         return DefaultCurrencyRepository(
             currencyRemoteDataSource,
             currencyLocalDataSource,
-            currencyConverter,
             dispatcher
         )
     }

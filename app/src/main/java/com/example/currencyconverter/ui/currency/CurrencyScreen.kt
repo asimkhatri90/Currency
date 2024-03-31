@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -20,6 +22,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Card
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
@@ -49,15 +52,16 @@ import com.example.currencyconverter.utils.Result
 fun CurrencyScreen(
     viewModel: CurrencyViewModel
 ) {
-    val currencyDropDownList by viewModel.currencyList.collectAsState()
-    val convertedList by viewModel.convertedCurrencyList.collectAsState()
-    val amount by viewModel.amount.collectAsState()
-    val selectedCurrency by viewModel.selectedCurrency.collectAsState()
-    val fetchTime by viewModel.fetchTime.collectAsState()
+    val currencyDropDownList: List<Currency> by viewModel.currencyList.collectAsState(initial = emptyList())
+    val currencyList: List<CurrencyWithAmount> by viewModel.convertedCurrencyList.collectAsState(
+        initial = emptyList()
+    )
+    val amount: String by viewModel.amount.collectAsState()
+    val selectedCurrency: Currency by viewModel.selectedCurrency.collectAsState()
+    val fetchTime: String by viewModel.fetchTime.collectAsState(initial = "")
+    val isLoading: Boolean by viewModel.isLoading
+    val toastMessage: String? by viewModel.toastMessage
 
-    val result = convertedList
-
-    val currencyList = if (result is Result.Success) result.data else listOf()
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -77,12 +81,15 @@ fun CurrencyScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextField(
+                modifier = Modifier.weight(1f),
                 value = amount, onValueChange = { newValue ->
                     viewModel.changeAmount(newValue)
                 }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             Spacer(modifier = Modifier.width(10.dp))
-            CurrencyDropDown(currencyList = currencyDropDownList,
+            CurrencyDropDown(
+                modifier = Modifier.weight(1f),
+                currencyList = currencyDropDownList,
                 selectedCurrency = selectedCurrency,
                 onCurrencySelected = {
                     viewModel.changeSelectedCurrency(it)
@@ -93,16 +100,27 @@ fun CurrencyScreen(
         ConvertedCurrenciesGrid(currencyList, selectedCurrency)
     }
 
+    if (isLoading) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(64.dp))
+        }
+    }
+
 }
 
 @Composable
 fun CurrencyDropDown(
+    modifier: Modifier,
     currencyList: List<Currency>, selectedCurrency: Currency, onCurrencySelected: (Currency) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     var selCurrency by remember { mutableStateOf(selectedCurrency) }
     Box(
-        modifier = Modifier.wrapContentSize(Alignment.TopStart)
+        modifier = modifier.wrapContentSize(Alignment.TopStart)
     ) {
         Row(
             modifier = Modifier
@@ -185,7 +203,8 @@ private fun CurrencyGridItem(
                 fontSize = 16.sp,
                 color = Color(0xFF000000),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(5.dp)
+                modifier = Modifier.padding(5.dp),
+                maxLines = 1
             )
             Text(
                 text = currency.currency.code,

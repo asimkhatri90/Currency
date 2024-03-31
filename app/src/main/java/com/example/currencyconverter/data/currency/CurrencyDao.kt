@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 interface CurrencyDao {
 
     @Query("SELECT * FROM currency")
-    fun getAll(): Flow<List<Currency>>
+    fun getAll(): List<Currency>
 
     @Upsert
     suspend fun upsertAll(currencies: List<Currency>)
