@@ -5,9 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +18,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
@@ -40,13 +39,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.currencyconverter.data.currency.model.CurrencyInfo
 import com.example.currencyconverter.data.currency.model.Currency
 import com.example.currencyconverter.data.currency.model.CurrencyWithAmount
-import com.example.currencyconverter.utils.Result
 
 @Composable
 fun CurrencyScreen(
@@ -61,6 +62,7 @@ fun CurrencyScreen(
     val fetchTime: String by viewModel.fetchTime.collectAsState(initial = "")
     val isLoading: Boolean by viewModel.isLoading
     val toastMessage: String? by viewModel.toastMessage
+    val currencyInfoList: Map<String, CurrencyInfo> by viewModel.currencyInfoList
 
     Column(
         modifier = Modifier
@@ -77,12 +79,14 @@ fun CurrencyScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp),
+                .padding(horizontal = 10.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextField(
+                maxLines = 1,
                 modifier = Modifier.weight(1f),
-                value = amount, onValueChange = { newValue ->
+                value = amount,
+                onValueChange = { newValue: String ->
                     viewModel.changeAmount(newValue)
                 }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
@@ -91,13 +95,13 @@ fun CurrencyScreen(
                 modifier = Modifier.weight(1f),
                 currencyList = currencyDropDownList,
                 selectedCurrency = selectedCurrency,
+                currencyInfoList = currencyInfoList,
                 onCurrencySelected = {
                     viewModel.changeSelectedCurrency(it)
                 })
 
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        ConvertedCurrenciesGrid(currencyList, selectedCurrency)
+        ConvertedCurrenciesGrid(currencyList, selectedCurrency, currencyInfoList)
     }
 
     if (isLoading) {
@@ -115,11 +119,14 @@ fun CurrencyScreen(
 @Composable
 fun CurrencyDropDown(
     modifier: Modifier,
-    currencyList: List<Currency>, selectedCurrency: Currency, onCurrencySelected: (Currency) -> Unit
+    currencyList: List<Currency>,
+    selectedCurrency: Currency,
+    currencyInfoList: Map<String, CurrencyInfo>,
+    onCurrencySelected: (Currency) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     var selCurrency by remember { mutableStateOf(selectedCurrency) }
-    Box(
+    Column(
         modifier = modifier.wrapContentSize(Alignment.TopStart)
     ) {
         Row(
@@ -140,21 +147,33 @@ fun CurrencyDropDown(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(
-                Color.LightGray
-            )
+            modifier = Modifier
+                .height(500.dp)
+                .background(Color.LightGray)
         ) {
             currencyList.forEachIndexed { index, s ->
+                val currencyInfo = currencyInfoList[s.code] ?: CurrencyInfo.DEFAULT
                 DropdownMenuItem(onClick = {
                     selCurrency = s
                     expanded = false
                     onCurrencySelected(s)
                 }) {
-                    Text(
-                        text = s.code,
-                        fontWeight = if (s.code == selectedCurrency.code)
-                            FontWeight.Bold else FontWeight.Normal
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AsyncImage(
+                            model = currencyInfo.countryFlagUrl,
+                            contentDescription = "CountryFlag"
+                        )
+                        Spacer(modifier = Modifier.padding(10.dp))
+                        Text(
+                            text = "${s.code} - ${currencyInfo.countryName}",
+                            fontWeight = if (s.code == selectedCurrency.code)
+                                FontWeight.Bold else FontWeight.Normal,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
         }
@@ -162,43 +181,51 @@ fun CurrencyDropDown(
 }
 
 @Composable
-fun ConvertedCurrenciesGrid(currencyList: List<CurrencyWithAmount>, selectedCurrency: Currency) {
+fun ConvertedCurrenciesGrid(
+    currencyList: List<CurrencyWithAmount>,
+    selectedCurrency: Currency,
+    currencyInfoList: Map<String, CurrencyInfo>
+) {
 
     if (currencyList.isEmpty()) return
 
-    LazyVerticalGrid(columns = GridCells.Adaptive(98.dp),
+    LazyVerticalGrid(columns = GridCells.Adaptive(110.dp),
         // content padding
-        contentPadding = PaddingValues(
-            start = 12.dp, top = 16.dp, end = 12.dp, bottom = 16.dp
-        ), content = {
+        content = {
             items(currencyList.size) { index ->
-                val currency = currencyList[index]
-                val selected = currency.currency.code == selectedCurrency.code
-                CurrencyGridItem(currency, selected)
+                val currency = currencyList[index].currency
+                val code  = currency.code
+                val amount = currencyList[index].amount
+                val selected = code == selectedCurrency.code
+                val currencyInfo = currencyInfoList[code] ?: CurrencyInfo.DEFAULT
+                CurrencyGridItem(code, amount.toString(), currencyInfo.countryFlagUrl, selected)
             }
         })
 }
 
 @Composable
 private fun CurrencyGridItem(
-    currency: CurrencyWithAmount,
+    code: String,
+    amount: String,
+    flagUrl: String,
     selected: Boolean
 ) {
     Card(
         backgroundColor = Color.White,
         modifier = Modifier
-            .padding(vertical = 5.dp, horizontal = 5.dp)
-            .fillMaxWidth()
-            .padding(vertical = 5.dp),
+            .padding(10.dp)
+            .fillMaxWidth(),
         elevation = 4.dp,
         border = BorderStroke(1.dp, if (selected) Color.Black else Color.LightGray)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(5.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = currency.amount.toString(),
+                text = amount,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 color = Color(0xFF000000),
@@ -206,13 +233,24 @@ private fun CurrencyGridItem(
                 modifier = Modifier.padding(5.dp),
                 maxLines = 1
             )
-            Text(
-                text = currency.currency.code,
-                fontWeight = FontWeight.Light,
-                fontSize = 14.sp,
-                color = Color(0xFF000000),
-                textAlign = TextAlign.Center,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // https://flagsapi.com/BE/flat/64.png
+                Text(
+                    text = code,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 14.sp,
+                    color = Color(0xFF000000),
+                    textAlign = TextAlign.Center,
+                )
+                AsyncImage(
+                    model = flagUrl,
+                    contentDescription = "CountryFlag"
+                )
+            }
         }
     }
 }

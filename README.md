@@ -8,7 +8,8 @@ recommended architecture guide by Google which is MVVM with Repository pattern, 
 to write clean and concise code with clear separation of concerns. 
 
 ## Currency
-This app uses Open Exchange (https://openexchangerates.org) api to fetch the currency rates in real time. 
+This app uses Open Exchange (https://openexchangerates.org) api to fetch the currency rates in real time.
+This app uses Country Flags (https://flagsapi.com/) api for showing the flag of the currency's country.
 To run this app, you will need to add your Open Exchange app id in local.properties  
 
 ## Tech stack & Open-source libraries

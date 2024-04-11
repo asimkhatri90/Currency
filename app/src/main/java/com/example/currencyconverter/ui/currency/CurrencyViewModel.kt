@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.currencyconverter.data.currency.CurrencyRepository
 import com.example.currencyconverter.data.currency.converter.CurrencyConverter
+import com.example.currencyconverter.data.currency.model.CurrencyInfo
 import com.example.currencyconverter.data.currency.model.Currency
 import com.example.currencyconverter.data.currency.model.CurrencyWithAmount
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,6 +48,9 @@ class CurrencyViewModel @Inject constructor(
     private val _selectedCurrency = MutableStateFlow(_USD)
 
     val selectedCurrency: StateFlow<Currency> = _selectedCurrency.asStateFlow()
+
+    private var _currencyInfoList : MutableState<Map<String, CurrencyInfo>> = mutableStateOf(CurrencyInfo.allAsMap())
+    val currencyInfoList: State<Map<String, CurrencyInfo>> get() = _currencyInfoList
 
     private val _currencyList: Flow<List<Currency>> =
         repository.getCurrencyList(onStart = {
