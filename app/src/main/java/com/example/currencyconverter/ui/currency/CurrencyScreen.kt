@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
@@ -39,15 +38,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.currencyconverter.data.currency.model.CurrencyInfo
 import com.example.currencyconverter.data.currency.model.Currency
+import com.example.currencyconverter.data.currency.model.CurrencyInfo
 import com.example.currencyconverter.data.currency.model.CurrencyWithAmount
+import com.example.currencyconverter.utils.CurrencyFormatter
+import java.util.Locale
 
 @Composable
 fun CurrencyScreen(
@@ -139,6 +139,11 @@ fun CurrencyDropDown(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround,
         ) {
+            val currencyInfo = currencyInfoList[selectedCurrency.code] ?: CurrencyInfo.DEFAULT
+            AsyncImage(
+                model = currencyInfo.countryFlagUrl,
+                contentDescription = "CountryFlag"
+            )
             Text(selectedCurrency.code)
             Icon(
                 Icons.Default.ArrowDropDown, contentDescription = "Test"
@@ -198,7 +203,7 @@ fun ConvertedCurrenciesGrid(
                 val amount = currencyList[index].amount
                 val selected = code == selectedCurrency.code
                 val currencyInfo = currencyInfoList[code] ?: CurrencyInfo.DEFAULT
-                CurrencyGridItem(code, amount.toString(), currencyInfo.countryFlagUrl, selected)
+                CurrencyGridItem(code, CurrencyFormatter.format(amount), currencyInfo.countryFlagUrl, selected)
             }
         })
 }
