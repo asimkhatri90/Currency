@@ -7,8 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.currencyconverter.data.currency.CurrencyRepository
 import com.example.currencyconverter.data.currency.converter.CurrencyConverter
-import com.example.currencyconverter.data.currency.model.CurrencyInfo
 import com.example.currencyconverter.data.currency.model.Currency
+import com.example.currencyconverter.data.currency.model.CurrencyInfo
 import com.example.currencyconverter.data.currency.model.CurrencyWithAmount
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -79,7 +79,7 @@ class CurrencyViewModel @Inject constructor(
                 it.map { curr ->
                     CurrencyWithAmount(
                         curr,
-                        converter.convert(_amount.value.toDouble(), curr, _selectedCurrency.value)
+                        converter.convert(_amount.value.toDouble(), _selectedCurrency.value, curr)
                     )
                 }
             }
