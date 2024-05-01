@@ -10,13 +10,14 @@ import com.example.currencyconverter.data.currency.converter.CurrencyConverter
 import com.example.currencyconverter.data.currency.model.Currency
 import com.example.currencyconverter.data.currency.model.CurrencyInfo
 import com.example.currencyconverter.data.currency.model.CurrencyWithAmount
+import com.example.currencyconverter.utils.CurrencyFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import java.util.Calendar
 import javax.inject.Inject
 
@@ -43,14 +44,16 @@ class CurrencyViewModel @Inject constructor(
 
     private val _amount = MutableStateFlow("1.0")
 
-    val amount: StateFlow<String> = _amount.asStateFlow()
+    val amount get() = _amount.asStateFlow()
 
     private val _selectedCurrency = MutableStateFlow(_USD)
 
-    val selectedCurrency: StateFlow<Currency> = _selectedCurrency.asStateFlow()
+    val selectedCurrency get() = _selectedCurrency.asStateFlow()
 
-    private var _currencyInfoList : MutableState<Map<String, CurrencyInfo>> = mutableStateOf(CurrencyInfo.allAsMap())
-    val currencyInfoList: State<Map<String, CurrencyInfo>> get() = _currencyInfoList
+    private var _currencyInfoMap : MutableState<Map<String, CurrencyInfo>> = mutableStateOf(CurrencyInfo.allAsMap())
+    val currencyInfoMap: State<Map<String, CurrencyInfo>> get() = _currencyInfoMap
+
+    private var currencyInfoList = CurrencyInfo.allAsList()
 
     private val _currencyList: Flow<List<Currency>> =
         repository.getCurrencyList(onStart = {
@@ -73,7 +76,7 @@ class CurrencyViewModel @Inject constructor(
         } else ""
     }
 
-    private val _convertedCurrencyList: Flow<List<CurrencyWithAmount>> =
+    private val convertedCurrencyList: Flow<List<CurrencyWithAmount>> =
         _refresh.flatMapLatest {
             _currencyList.map {
                 it.map { curr ->
@@ -85,7 +88,18 @@ class CurrencyViewModel @Inject constructor(
             }
         }
 
-    val convertedCurrencyList get() = _convertedCurrencyList
+    private var _query : MutableStateFlow<String> = MutableStateFlow("")
+    val query get() = _query.asStateFlow()
+
+    private val filteredConvertedCurrencyList: Flow<List<CurrencyWithAmount>> = _query.flatMapLatest { search ->
+        convertedCurrencyList.mapLatest {
+            CurrencyFilter.filter(search, it, currencyInfoList)
+        }
+    }
+
+    val displayCurrencyList get() =
+        if (_query.value.isNotEmpty()) filteredConvertedCurrencyList
+        else convertedCurrencyList
 
     fun changeSelectedCurrency(newCurrency: Currency) {
         _selectedCurrency.value = newCurrency
@@ -99,5 +113,9 @@ class CurrencyViewModel @Inject constructor(
             this._amount.value = "1.0"
 
         _refresh.value += 1
+    }
+
+    fun searchCurrency(query: String) {
+        _query.value = query
     }
 }
