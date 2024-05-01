@@ -2,6 +2,10 @@
 
 A sample project created for implementing Google's MVVM recommended architecture.
 
+<p align="center">
+<img src="images/screens.png"/>
+</p>
+
 ## Description
 This app shows the list of currencies in a grid, with the ability to select a base currency from a dropdown. This app is written following the 
 recommended architecture guide by Google which is MVVM with Repository pattern, as this gives the opportunity 
