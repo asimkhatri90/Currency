@@ -79,7 +79,7 @@ dependencies {
     testImplementation 'androidx.room:room-testing:2.6.1'
 
     // Hilt
-    implementation 'com.google.dagger:hilt-android:2.51'
+    implementation 'com.google.dagger:hilt-android:2.52'
     ksp 'com.google.dagger:hilt-compiler:2.51'
 
     testImplementation 'junit:junit:4.13.2'
